@@ -1,4 +1,5 @@
 import os
+from venv import create
 from dotenv import load_dotenv
 from openai import OpenAI
 
@@ -20,6 +21,10 @@ def main():
             }
         ],
     )
+    if response.usage == None:
+        raise RuntimeError("There's no usage data!")
+    print(f"Prompt tokens: {response.usage.prompt_tokens}")
+    print(f"Response tokens: {response.usage.completion_tokens}")
     print(response.choices[0].message.content)
 
 if __name__ == "__main__":
