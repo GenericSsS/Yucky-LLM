@@ -1,10 +1,14 @@
 import os
+import argparse
 from venv import create
 from dotenv import load_dotenv
 from openai import OpenAI
 
 def main():
     load_dotenv()
+    parser = argparse.ArgumentParser(description="Chatbot")
+    parser.add_argument("user_prompt", type=str, help="User prompt")
+    args = parser.parse_args()
     api_key = os.environ.get("OPENROUTER_API_KEY")
     if api_key == None:
         raise RuntimeError("Well shit... where's the key?")
@@ -17,7 +21,7 @@ def main():
         messages=[
             {
                 "role": "user",
-                "content": "Why is Boot.dev such a great place to learn backend development? Use one paragraph maximum.",
+                "content": args.user_prompt,
             }
         ],
     )
