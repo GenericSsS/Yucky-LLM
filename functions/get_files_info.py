@@ -9,6 +9,13 @@ def get_files_info(working_directory: str, directory: str = ".") -> str:
         if os.path.commonpath([abs_path, target_path]) != abs_path:
             return f'Error: Cannot list "{directory}" as it is outside the permitted working directory'
         else:
-            return f'Success: "{directory}" is within the working directory'
+            try:
+                stuff_in_here = []
+                for file in os.listdir(target_path):
+                    filepath = os.path.normpath(os.path.join(target_path, file))
+                    stuff_in_here.append(f"- {file}: file_size={os.path.getsize(filepath)} bytes, is_dir={os.path.isdir(filepath)}")
+                return "\n".join(stuff_in_here)
+            except Exception:
+                return "Error: Could not read data"
     except Exception:
-        return "Your arguments are invalid"
+        return "Error: Your arguments are invalid"
