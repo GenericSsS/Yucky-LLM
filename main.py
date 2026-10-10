@@ -5,7 +5,7 @@ from venv import create
 from dotenv import load_dotenv
 from openai import OpenAI
 from prompts import system_prompt
-from call_function import available_functions
+from call_function import available_functions, call_function
 
 def main():
     load_dotenv()
@@ -39,9 +39,13 @@ def main():
         print(f"Response tokens: {response.usage.completion_tokens}")
     if len(message.tool_calls) != 0:
         for tool_call in message.tool_calls:
-            function_args = json.loads(tool_call.function.arguments or "{}")
-            print(f"Calling function: {tool_call.function.name}({function_args})")
-    print(response.choices[0].message.content)
+            result_message = call_function(tool_call, args.verbose)
+            if len(result_message["content"]) == 0:
+                raise Exception("where's the output?")
+            if args.verbose:
+                print(f"-> {result_message['content']}")
+    else:
+        print(response.choices[0].message.content)
 
 if __name__ == "__main__":
     main()
