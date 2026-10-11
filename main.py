@@ -1,4 +1,5 @@
 import json
+import sys
 import os
 import argparse
 from venv import create
@@ -24,28 +25,38 @@ def main():
         {"role": "system", "content": system_prompt},
         {"role": "user", "content": args.user_prompt},
     ]
-    response = client.chat.completions.create(
-        model="openrouter/free",
-        messages=messages,
-        tools=available_functions,
-        temperature=0,
-    )
-    message = response.choices[0].message
-    if response.usage == None:
-        raise RuntimeError("There's no usage data!")
-    if args.verbose:
-        print(f"User prompt: {args.user_prompt}")
-        print(f"Prompt tokens: {response.usage.prompt_tokens}")
-        print(f"Response tokens: {response.usage.completion_tokens}")
-    if len(message.tool_calls) != 0:
-        for tool_call in message.tool_calls:
-            result_message = call_function(tool_call, args.verbose)
-            if len(result_message["content"]) == 0:
-                raise Exception("where's the output?")
-            if args.verbose:
-                print(f"-> {result_message['content']}")
-    else:
-        print(response.choices[0].message.content)
+    for _ in range(20):
+        response = client.chat.completions.create(
+            model="openrouter/free",
+            messages=messages,
+            tools=available_functions,
+            temperature=0,
+        )
+        message = response.choices[0].message
+        messages.append(message)
+        if response.usage == None:
+            raise RuntimeError("There's no usage data!")
+        if args.verbose:
+            print(f"User prompt: {args.user_prompt}")
+            print(f"Prompt tokens: {response.usage.prompt_tokens}")
+            print(f"Response tokens: {response.usage.completion_tokens}")
+        if message.tool_calls is not None and len(message.tool_calls) != 0:
+            for tool_call in message.tool_calls:
+                result_message = call_function(tool_call, args.verbose)
+                if len(result_message["content"]) == 0:
+                    raise Exception("where's the output?")
+                if args.verbose:
+                    print(f"-> {result_message['content']}")
+                tool_message = {
+                    "role": "tool",
+                    "tool_call_id": tool_call.id,
+                    "content": result_message['content']
+                }
+                messages.append(tool_message)
+        else:
+            print(response.choices[0].message.content)
+            return
+    sys.exit(1)
 
 if __name__ == "__main__":
     main()
